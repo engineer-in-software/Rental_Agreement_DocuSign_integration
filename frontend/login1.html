@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login</title>
+    <!-- Include AWS SDK for JavaScript -->
+    <script src="https://sdk.amazonaws.com/js/aws-sdk-2.931.0.min.js"></script>
+    <!-- Include Amazon Cognito Identity SDK -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/amazon-cognito-identity-js/5.2.0/amazon-cognito-identity.min.js"></script>
+</head>
+<body>
+    <h1>Login Page</h1>
+
+    <form id="loginForm">
+        <label for="email">Email:</label>
+        <input type="email" id="email" name="email" required><br>
+        <label for="password">Password:</label>
+        <input type="password" id="password" name="password" required><br>
+        <button type="submit">Login</button>
+    </form>
+
+    <script>
+        // Initialize Amazon Cognito
+        AWS.config.region = 'us-east-1'; // Replace 'your-region' with your AWS region
+        var poolData = {
+            UserPoolId: 'us-east-1_tEHio2qJs', // Replace 'your-user-pool-id' with your Cognito User Pool ID
+            ClientId: '61cvu9sac04qm97cdiqmm4ulue' // Replace 'your-client-id' with your Cognito App Client ID
+        };
+        var userPool = new AmazonCognitoIdentity.CognitoUserPool(poolData);
+
+        // Handle form submission
+        document.getElementById('loginForm').addEventListener('submit', function(event) {
+            event.preventDefault(); // Prevent default form submission
+
+            var email = document.getElementById('email').value;
+            var password = document.getElementById('password').value;
+
+            var authenticationData = {
+                Username: email,
+                Password: password
+            };
+            var authenticationDetails = new AmazonCognitoIdentity.AuthenticationDetails(authenticationData);
+
+            var userData = {
+                Username: email,
+                Pool: userPool
+            };
+            var cognitoUser = new AmazonCognitoIdentity.CognitoUser(userData);
+
+            // Authenticate user
+            cognitoUser.authenticateUser(authenticationDetails, {
+                onSuccess: function (result) {
+                    // User authenticated successfully
+                    console.log('Authentication successful');
+                    // Redirect to home page or perform any other action
+                    window.location.href = 'home.html';
+                },
+                onFailure: function (err) {
+                    // User authentication failed
+                    console.error('Authentication failed', err);
+                    // Display error message to user
+                    alert('Authentication failed. Please check your credentials.');
+                }
+            });
+        });
+    </script>
+</body>
+</html>
