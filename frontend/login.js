@@ -1,4 +1,4 @@
-import * as session from 'express-session';
+// import * as session from 'express-session';
 import * as AmazonCognitoIdentity from 'amazon-cognito-identity-js';
 import * as AWS from 'aws-sdk';
 
@@ -13,6 +13,7 @@ const poolData = new AmazonCognitoIdentity.CognitoUserPool({
 const userPool = new AmazonCognitoIdentity.CognitoUserPool(poolData);
 
 function authenticateUser(event) {
+    console.log('Authenticating user...');
     const username = document.getElementById('username').value;
     const password = document.getElementById('password').value;
 
@@ -64,7 +65,7 @@ function authenticateUser(event) {
     });
 }
 
-document.getElementById('login-form').addEventListener('submit', authenticateUser);
-document.getElementById('login-form').addEventListener('submit', (event) => {
-    event.preventDefault();
-});
+// document.getElementById('login-form').addEventListener('submit', authenticateUser);
+// document.getElementById('login-form').addEventListener('submit', (event) => {
+//     event.preventDefault();
+// });
