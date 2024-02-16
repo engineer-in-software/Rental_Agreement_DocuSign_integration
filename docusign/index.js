@@ -36,7 +36,13 @@ app.post('/form', async (req, res) => {
     console.log("envelope results ", results);
     
     console.log("Received form data",req.body);
-    res.send("Form data received");
+    res.send('<script>alert("Form data received. Please check your email for the DocuSign agreement.");</script>');
+    res.sendFile(__dirname + '/dashboard.html');
+    // Redirect to dashboard.html after a delay (adjust the delay as needed)
+    setTimeout(() => {
+        //res.sendFile(__dirname + '/dashboard.html');
+    }, 2000); // 2000 milliseconds delay (2 seconds)
+
 });
 
 function getEnvelopesApi(request){
@@ -95,6 +101,12 @@ async function checkToken(req){
     }
 }
 
+
+
+
+
+/*
+
 app.get('/',async (req, res) => {
     
     await checkToken(req);
@@ -107,15 +119,19 @@ app.listen(port, () => {
     console.log(`App listening at http://localhost:${port}`,process.env.USER_ID);
 });
 
+*/
 
 
 //ManageApplication
 
-eg003ListEnvelopes.worker = async (args) => {
+
+const eg003ListEnvelopes = {};
+/*
+eg003ListEnvelopesWorker = async (args) => {
     
     let dsApiClient = new docusign.ApiClient();
-    dsApiClient.setBasePath(args.basePath);
-    dsApiClient.addDefaultHeader('Authorization', 'Bearer ' + args.accessToken);
+    dsApiClient.setBasePath(process.env.BASE_PATH);
+    dsApiClient.addDefaultHeader('Authorization', 'Bearer ' + request.session.access_token);
     let envelopesApi = new docusign.EnvelopesApi(dsApiClient)
       , results = null;
 
@@ -130,8 +146,100 @@ eg003ListEnvelopes.worker = async (args) => {
     let options = {fromDate: moment().subtract(30, 'days').format()};
 
     // Exceptions will be caught by the calling function
-    results = await envelopesApi.listStatusChanges(args.accountId, options);
+    results = await envelopesApi.listStatusChanges(process.env.ACCOUNT_ID, options);
+    console.log("Envelopes::listStatusChanges results", results);
     return results;
 }
 
+*/
+
 //https://account-d.docusign.com/oauth/auth?response_type=code&scope=signature%20impersonation&client_id=86c68f8d-de70-4492-8361-8a0f5f467254&redirect_uri=http://localhost:8000/
+
+//const express = require('express');
+//const path = require("path");
+//const session = require('express-session');
+
+//const app = express();
+//const port = 8000;
+async function getAllEnvelopes(request) {
+    let envelopesApi = getEnvelopesApi(request);
+    let results = null;
+    let options = { fromDate: moment().subtract(30, 'days').format() }; // Retrieve envelopes from the last 30 days
+    try {
+        results = await envelopesApi.listStatusChanges(process.env.ACCOUNT_ID, options);
+        console.log("Envelopes::listStatusChanges results", results);
+    } catch (error) {
+        console.error("Error retrieving envelopes:", error);
+    }
+    return results;
+}
+
+module.exports = { getAllEnvelopes };
+
+// Route to retrieve and display envelopes
+app.get('/maintenance', async (req, res) => {
+    await checkToken(req);
+    await getAllEnvelopes(req);
+    res.send("Envelopes retrieved. Check console for details.");
+});
+
+// Middleware to parse request body
+app.use(express.urlencoded({ extended: true }));
+
+// Admin login route
+app.post('/login', (req, res) => {
+    const { username, password } = req.body;
+    // Check if username and password match
+    if (username === "Admin" && password === "Admin@123") {
+        req.session.loggedIn = true;
+        res.redirect('/dashboard');
+    } else {
+        res.redirect('/');
+    }
+});
+
+// Dashboard route
+app.get('/dashboard', (req, res) => {
+    // Check if admin is logged in
+    if (req.session.loggedIn) {
+        res.sendFile(path.join(__dirname, '/dashboard.html'));
+    } else {
+        res.redirect('/');
+    }
+});
+
+// Route to redirect to main.html
+app.get('/main.html', (req, res) => {
+    // Check if admin is logged in
+    if (req.session.loggedIn) {
+        res.sendFile(path.join(__dirname, '/main.html'));
+    } else {
+        res.redirect('/');
+    }
+});
+
+// Route to redirect to maintenance.html
+app.get('/maintenance.html', (req, res) => {
+    // Check if admin is logged in
+    if (req.session.loggedIn) {
+        console.log(eg003ListEnvelopes);
+        res.sendFile(path.join(__dirname, '/maintenance.html'));
+    } else {
+        res.redirect('/');
+    }
+});
+// Serve dashboard.html file
+app.get('/dashboard.html', (req, res) => {
+    res.sendFile(__dirname + '/dashboard.html');
+});
+// Serve login page at root URL
+app.get('/', (req, res) => {
+    res.sendFile(path.join(__dirname, '/login.html'));
+});
+
+// Start server
+app.listen(port, () => {
+    console.log(`App listening at http://localhost:${port}`);
+});
+
+
