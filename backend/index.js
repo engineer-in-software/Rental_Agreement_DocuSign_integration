@@ -62,7 +62,7 @@ app.post('/', async(req, res) => {
   //   // Exceptions will be caught by the calling function
   //   let results = await envelopesApi.createEnvelope(
   //           process.env.ACCOUNT_ID, {envelopeDefinition: envelope});
-  console.log(req);
+   console.log(typeof(express.text));
   res.send('results');
 });
 
